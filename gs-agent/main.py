@@ -5,8 +5,8 @@ import yaml
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-CONFIG_PATH = os.environ.get("MC_AGENT_CONFIG", "/opt/mc-agent/config.yaml")
-TOKEN = os.environ["MC_AGENT_TOKEN"]
+CONFIG_PATH = os.environ.get("GS_AGENT_CONFIG", "/opt/gs-agent/config.yaml")
+TOKEN = os.environ["GS_AGENT_TOKEN"]
 SYSTEMCTL = "/usr/bin/systemctl"
 SUDO = "/usr/bin/sudo"
 JOURNALCTL = "/usr/bin/journalctl"

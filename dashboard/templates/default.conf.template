@@ -4,8 +4,8 @@ server {
     index index.html;
 
     location /api/ {
-        proxy_pass http://${MC_AGENT_HOST}:${MC_AGENT_PORT}/api/;
-        proxy_set_header Authorization "Bearer ${MC_AGENT_TOKEN}";
+        proxy_pass http://${GS_AGENT_HOST}:${GS_AGENT_PORT}/api/;
+        proxy_set_header Authorization "Bearer ${GS_AGENT_TOKEN}";
     }
 
     location / {

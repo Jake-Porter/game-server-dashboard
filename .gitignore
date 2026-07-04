@@ -1,4 +1,4 @@
-mc-agent.env
+gs-agent.env
 config.yaml
 .env
 *.token

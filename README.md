@@ -5,7 +5,7 @@ game servers on a home network, without SSHing in every time.
 
 ## Architecture
 
-1. **`mc-agent`** (`mc-agent/`) — a FastAPI service that runs natively on the
+1. **`gs-agent`** (`gs-agent/`) — a FastAPI service that runs natively on the
    game server host. It's the only thing allowed to run `systemctl
    start`/`stop` on the game server units, via a tightly scoped sudoers rule.
    Exposes a bearer-token-authed REST API.
@@ -14,44 +14,46 @@ game servers on a home network, without SSHing in every time.
    (so the agent's firewall can be scoped to the dashboard host's IP, not
    opened to every browser that loads the page) and injects the auth token
    via an environment variable — the token never ships to the browser.
-3. Each game server runs under an instantiated systemd unit
-   (`minecraft@<name>.service`) so it can be controlled cleanly instead of
-   being started manually via `java -jar`.
+3. Each game server runs under a systemd unit — instantiated
+   (`minecraft@<name>.service`) for Minecraft servers, or a plain
+   `<name>.service` for anything else — so it can be controlled cleanly
+   instead of being started manually.
 
-## `mc-agent` setup
+## `gs-agent` setup
 
 ```
-sudo mkdir -p /opt/mc-agent
-# copy main.py, requirements.txt, config.yaml (see config.yaml.example) into /opt/mc-agent
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin mcagent  # if it doesn't already exist
-sudo usermod -aG systemd-journal mcagent   # read-only journal access, needed for the logs endpoint
-cd /opt/mc-agent
-sudo -u mcagent python3 -m venv venv
-sudo -u mcagent ./venv/bin/pip install -r requirements.txt
+sudo mkdir -p /opt/gs-agent
+# copy main.py, requirements.txt, config.yaml (see config.yaml.example) into /opt/gs-agent
+sudo useradd --system --no-create-home --home-dir /opt/gs-agent --shell /usr/sbin/nologin gsagent  # if it doesn't already exist
+sudo usermod -aG systemd-journal gsagent   # read-only journal access, needed for the logs endpoint
+cd /opt/gs-agent
+sudo -u gsagent python3 -m venv venv
+sudo -u gsagent ./venv/bin/pip install -r requirements.txt
 
-# generate a token and install the env file (see mc-agent.env.example)
+# generate a token and install the env file (see gs-agent.env.example)
 openssl rand -hex 32
-sudo cp mc-agent.env.example /etc/mc-agent.env   # then edit in the real token
-sudo chmod 600 /etc/mc-agent.env
+sudo cp gs-agent.env.example /etc/gs-agent.env   # then edit in the real token
+sudo chmod 600 /etc/gs-agent.env
 
 sudo cp systemd/minecraft@.service /etc/systemd/system/
-sudo cp systemd/mc-agent.service /etc/systemd/system/
-sudo cp sudoers.d/mc-agent /etc/sudoers.d/mc-agent
-sudo chmod 440 /etc/sudoers.d/mc-agent
-sudo visudo -cf /etc/sudoers.d/mc-agent   # validate syntax before trusting it
+sudo cp systemd/gs-agent.service /etc/systemd/system/
+sudo cp sudoers.d/gs-agent /etc/sudoers.d/gs-agent
+sudo chmod 440 /etc/sudoers.d/gs-agent
+sudo visudo -cf /etc/sudoers.d/gs-agent   # validate syntax before trusting it
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now mc-agent.service
+sudo systemctl enable --now gs-agent.service
 ```
 
 Notes:
 - `minecraft@.service` must keep `SuccessExitStatus=143` — Minecraft/Java
   exits with 143 on SIGTERM, and without this systemd reports a clean stop
-  as `failed`.
-- `mc-agent.service` must NOT set `NoNewPrivileges=true` — that blocks
+  as `failed`. Other games may shut down cleanly on their own (Vintage
+  Story does) and don't need this.
+- `gs-agent.service` must NOT set `NoNewPrivileges=true` — that blocks
   `sudo` from escalating, which breaks start/stop entirely.
-- The sudoers rule only grants `systemctl start`/`stop` on
-  `minecraft@*.service`. `is-active` and `journalctl` need no elevated
+- The sudoers rule only grants `systemctl start`/`stop` on the specific
+  units/patterns you list. `is-active` and `journalctl` need no elevated
   privilege at all — journal read access comes from the `systemd-journal`
   group instead.
 - Restrict the agent's port with your firewall to only the dashboard
@@ -63,16 +65,23 @@ Notes:
   else — see the Vintage Story entry in `config.yaml.example`). The
   sudoers rule needs a matching `start`/`stop` line for each unit or
   unit pattern you add.
+- If you ever rename the agent's system user (or move its install
+  directory), rebuild its venv from scratch afterward — venv scripts
+  (`pip`, `uvicorn`, etc.) hardcode the old absolute path in their
+  shebang lines and will break silently otherwise.
 
 ## Dashboard setup
 
-Deploy `dashboard/docker-compose.yml` (edit the `MC_AGENT_HOST`,
-`MC_AGENT_PORT`, and `MC_AGENT_TOKEN` values first), with `dashboard/html`
+Deploy `dashboard/docker-compose.yml` (edit the `GS_AGENT_HOST`,
+`GS_AGENT_PORT`, and `GS_AGENT_TOKEN` values first), with `dashboard/html`
 mounted read-only at `/usr/share/nginx/html` and `dashboard/templates`
 mounted read-only at `/etc/nginx/templates` (nginx's built-in envsubst
-templating renders `MC_AGENT_TOKEN` etc. into the proxy config at
+templating renders `GS_AGENT_TOKEN` etc. into the proxy config at
 container start — the real token only ever needs to live in the
-container's environment, never in a committed file).
+container's environment, never in a committed file). Note this
+substitution only happens once at container start, so changing the
+template or the env var names requires a full recreate, not just a
+reload/restart.
 
 ## Security notes
 

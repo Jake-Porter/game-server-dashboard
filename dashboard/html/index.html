@@ -361,7 +361,7 @@ async function refresh() {
     document.getElementById("last-updated").textContent =
       "Updated " + new Date().toLocaleTimeString();
   } catch (e) {
-    showError("Failed to reach mc-agent: " + e.message);
+    showError("Failed to reach gs-agent: " + e.message);
   }
 }
 
