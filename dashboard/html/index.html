@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jake's Game Servers</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%233ddc84'/%3E%3Cpath d='M7 9h2v2H7zM11 9h2v2h-2zM15 9h2v2h-2zM7 13h2v2H7zM11 13h2v2h-2zM15 13h2v2h-2z' fill='%2310131a'/%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #10131a;
@@ -52,9 +53,21 @@
     margin: 0.35rem 0 0;
     font-size: 0.95rem;
   }
+  .topbar-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+  }
+  #summary {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  #summary .count-active { color: var(--green); }
   #last-updated {
     color: var(--text-dim);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
   .banner {
     background: var(--red-dim);
@@ -79,14 +92,28 @@
   .card {
     background: var(--card);
     border: 1px solid var(--card-border);
+    border-left: 3px solid var(--gray-dim);
     border-radius: 12px;
     padding: 1.3rem;
     transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .card.card-enter {
+    animation: card-in 0.35s ease backwards;
+  }
+  .card.card-enter:nth-child(1) { animation-delay: 0.02s; }
+  .card.card-enter:nth-child(2) { animation-delay: 0.07s; }
+  .card.card-enter:nth-child(3) { animation-delay: 0.12s; }
+  .card.card-enter:nth-child(4) { animation-delay: 0.17s; }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .card:hover {
     transform: translateY(-2px);
     border-color: #34405a;
   }
+  .card.active { border-left-color: var(--green); }
+  .card.failed { border-left-color: var(--red); }
   .card-top {
     display: flex;
     justify-content: space-between;
@@ -97,6 +124,30 @@
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .game-icon { font-size: 1.15rem; line-height: 1; }
+  .skeleton {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.3rem;
+    height: 128px;
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
   }
   .dot {
     width: 10px;
@@ -148,6 +199,7 @@
     transition: filter 0.1s ease, opacity 0.1s ease;
   }
   button:hover:not(:disabled) { filter: brightness(1.15); }
+  button:active:not(:disabled) { transform: scale(0.96); }
   button svg { width: 14px; height: 14px; }
   .start-btn { background: #1d5c3a; color: #a4f2c6; }
   .stop-btn { background: #5c1f1f; color: #ffb3b3; }
@@ -225,10 +277,16 @@
       <h1>Jake's Game Servers</h1>
       <p class="subtitle">Start, stop, and watch logs — no SSH required</p>
     </div>
-    <span id="last-updated"></span>
+    <div class="topbar-meta">
+      <span id="summary"></span>
+      <span id="last-updated"></span>
+    </div>
   </div>
   <div id="error" class="banner" hidden></div>
-  <div id="grid" class="grid"></div>
+  <div id="grid" class="grid">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
   <footer>
     <label for="refresh-interval">Auto-refresh:</label>
     <select id="refresh-interval">
@@ -271,20 +329,28 @@ function statusClass(status) {
   return "failed";
 }
 
+function gameIcon(name) {
+  const n = name.toLowerCase();
+  if (n.includes("vintage")) return "\u{1FAA8}"; // rock
+  if (n.includes("craft") || n.includes("minecraft")) return "⛏️"; // pick
+  return "\u{1F3AE}"; // controller
+}
+
+let firstRender = true;
+
 function render(servers) {
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
   if (servers.length === 0) {
     grid.innerHTML = `<div class="empty">No servers configured yet.</div>`;
-    return;
   }
   for (const s of servers) {
     const cls = statusClass(s.status);
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = `card ${cls}${firstRender ? " card-enter" : ""}`;
     card.innerHTML = `
       <div class="card-top">
-        <h2>${s.display_name}</h2>
+        <h2><span class="game-icon">${gameIcon(s.name)}</span>${s.display_name}</h2>
         <span class="dot ${cls}"></span>
       </div>
       <div class="status-label ${cls}">${s.status}</div>
@@ -296,6 +362,10 @@ function render(servers) {
     `;
     grid.appendChild(card);
   }
+  const activeCount = servers.filter((s) => s.status === "active").length;
+  document.getElementById("summary").innerHTML = servers.length
+    ? `<span class="count-active">${activeCount}</span> / ${servers.length} running`
+    : "";
   grid.querySelectorAll(".start-btn, .stop-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
@@ -310,6 +380,7 @@ function render(servers) {
   grid.querySelectorAll(".logs-btn").forEach((btn) => {
     btn.addEventListener("click", () => openLogs(btn.dataset.name, btn.dataset.displayName));
   });
+  firstRender = false;
 }
 
 function showError(message) {
