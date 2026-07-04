@@ -1,0 +1,21 @@
+[Unit]
+Description=Minecraft Server (%i)
+After=network.target
+
+[Service]
+Type=simple
+User=minecraft
+Group=minecraft
+WorkingDirectory=/opt/minecraft/%i
+ExecStart=/opt/minecraft/%i/run.sh
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+KillSignal=SIGTERM
+SuccessExitStatus=143
+
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

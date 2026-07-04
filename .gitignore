@@ -1,0 +1,4 @@
+mc-agent.env
+config.yaml
+.env
+*.token

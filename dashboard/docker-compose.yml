@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  gsdash:
+    image: nginx:alpine
+    container_name: ctnr-gsdash-01
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      - TZ=America/Denver
+      - MC_AGENT_HOST=10.0.0.55
+      - MC_AGENT_PORT=8800
+      - MC_AGENT_TOKEN=change-me
+    volumes:
+      - /opt/gsdash/html:/usr/share/nginx/html:ro
+      - /opt/gsdash/templates:/etc/nginx/templates:ro

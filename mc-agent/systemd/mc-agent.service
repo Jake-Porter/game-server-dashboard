@@ -1,0 +1,19 @@
+[Unit]
+Description=mc-agent (game server control API)
+After=network.target
+
+[Service]
+Type=simple
+User=mcagent
+Group=mcagent
+WorkingDirectory=/opt/mc-agent
+EnvironmentFile=/etc/mc-agent.env
+ExecStart=/opt/mc-agent/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8800
+Restart=on-failure
+RestartSec=5
+
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

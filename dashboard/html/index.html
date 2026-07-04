@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jake's Game Servers</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #14171c;
+    color: #e6e6e6;
+    margin: 0;
+    padding: 2rem;
+  }
+  h1 { font-weight: 600; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: #1e222a;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .card h2 { margin: 0 0 0.5rem 0; font-size: 1.1rem; }
+  .status {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+  .status.active { background: #1f5c3a; color: #7ee6a8; }
+  .status.inactive { background: #3a3a3a; color: #bbb; }
+  .status.failed, .status.unknown { background: #5c1f1f; color: #e67e7e; }
+  button {
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .start-btn { background: #2f7a44; color: white; }
+  .stop-btn { background: #7a2f2f; color: white; }
+  .logs-btn { background: #2f4d7a; color: white; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #error { color: #e67e7e; margin-bottom: 1rem; }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1e222a;
+    border-radius: 10px;
+    padding: 1.25rem;
+    width: min(800px, 90vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .modal pre {
+    background: #0f1115;
+    border-radius: 6px;
+    padding: 0.75rem;
+    overflow: auto;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<h1>Jake's Game Servers</h1>
+<div id="error"></div>
+<div id="grid" class="grid"></div>
+
+<div id="logs-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="logs-title" style="margin:0;"></h2>
+      <div>
+        <button id="logs-refresh">Refresh</button>
+        <button id="logs-close">Close</button>
+      </div>
+    </div>
+    <pre id="logs-content"></pre>
+  </div>
+</div>
+
+<script>
+async function apiFetch(path, options = {}) {
+  const res = await fetch(path, options);
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
+}
+
+function statusClass(status) {
+  if (status === "active") return "active";
+  if (status === "inactive") return "inactive";
+  return "failed";
+}
+
+function render(servers) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  for (const s of servers) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <h2>${s.display_name}</h2>
+      <div class="status ${statusClass(s.status)}">${s.status}</div>
+      <div>
+        <button class="start-btn" data-name="${s.name}" data-action="start" ${s.status === "active" ? "disabled" : ""}>Start</button>
+        <button class="stop-btn" data-name="${s.name}" data-action="stop" ${s.status !== "active" ? "disabled" : ""}>Stop</button>
+        <button class="logs-btn" data-name="${s.name}" data-display-name="${s.display_name}" data-action="logs">Logs</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+  grid.querySelectorAll(".start-btn, .stop-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await apiFetch(`/api/servers/${btn.dataset.name}/${btn.dataset.action}`, { method: "POST" });
+      } catch (e) {
+        document.getElementById("error").textContent = e.message;
+      }
+      await refresh();
+    });
+  });
+  grid.querySelectorAll(".logs-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openLogs(btn.dataset.name, btn.dataset.displayName));
+  });
+}
+
+const logsModal = document.getElementById("logs-modal");
+const logsTitle = document.getElementById("logs-title");
+const logsContent = document.getElementById("logs-content");
+let currentLogsServer = null;
+
+async function loadLogs(name) {
+  try {
+    const data = await apiFetch(`/api/servers/${name}/logs?lines=200`);
+    logsContent.textContent = data.logs || "(no log output)";
+    logsContent.scrollTop = logsContent.scrollHeight;
+  } catch (e) {
+    logsContent.textContent = "Failed to load logs: " + e.message;
+  }
+}
+
+function openLogs(name, displayName) {
+  currentLogsServer = name;
+  logsTitle.textContent = `${displayName} — logs`;
+  logsContent.textContent = "Loading...";
+  logsModal.classList.add("open");
+  loadLogs(name);
+}
+
+document.getElementById("logs-refresh").addEventListener("click", () => {
+  if (currentLogsServer) loadLogs(currentLogsServer);
+});
+document.getElementById("logs-close").addEventListener("click", () => {
+  logsModal.classList.remove("open");
+  currentLogsServer = null;
+});
+logsModal.addEventListener("click", (e) => {
+  if (e.target === logsModal) {
+    logsModal.classList.remove("open");
+    currentLogsServer = null;
+  }
+});
+
+async function refresh() {
+  try {
+    const servers = await apiFetch("/api/servers");
+    document.getElementById("error").textContent = "";
+    render(servers);
+  } catch (e) {
+    document.getElementById("error").textContent = "Failed to reach mc-agent: " + e.message;
+  }
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

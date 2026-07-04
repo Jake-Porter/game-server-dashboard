@@ -1,0 +1,3 @@
+servers:
+  - name: craftoria
+    display_name: Craftoria
