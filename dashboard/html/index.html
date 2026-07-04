@@ -154,10 +154,22 @@
   .logs-btn { background: #223357; color: #b7d0ff; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   footer {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     color: var(--text-dim);
     font-size: 0.8rem;
     margin-top: 2.5rem;
+  }
+  #refresh-interval {
+    background: var(--gray-dim);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
   }
   .modal-overlay {
     display: none;
@@ -217,7 +229,14 @@
   </div>
   <div id="error" class="banner" hidden></div>
   <div id="grid" class="grid"></div>
-  <footer>Auto-refreshes every 5 seconds</footer>
+  <footer>
+    <label for="refresh-interval">Auto-refresh:</label>
+    <select id="refresh-interval">
+      <option value="5000">Every 5 seconds</option>
+      <option value="30000">Every 30 seconds</option>
+      <option value="60000">Every minute</option>
+    </select>
+  </footer>
 </div>
 
 <div id="logs-modal" class="modal-overlay">
@@ -346,8 +365,21 @@ async function refresh() {
   }
 }
 
+const REFRESH_KEY = "gsdash_refresh_interval";
+const refreshSelect = document.getElementById("refresh-interval");
+let refreshTimer = null;
+
+function setRefreshInterval(ms) {
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(refresh, ms);
+  localStorage.setItem(REFRESH_KEY, ms);
+}
+
+refreshSelect.value = localStorage.getItem(REFRESH_KEY) || "5000";
+refreshSelect.addEventListener("change", () => setRefreshInterval(Number(refreshSelect.value)));
+
 refresh();
-setInterval(refresh, 5000);
+setRefreshInterval(Number(refreshSelect.value));
 </script>
 </body>
 </html>
