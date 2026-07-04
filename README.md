@@ -57,6 +57,12 @@ Notes:
 - Restrict the agent's port with your firewall to only the dashboard
   host's IP — the whole security model assumes the agent is not reachable
   from arbitrary hosts on the network.
+- `config.yaml` isn't Minecraft-specific: each entry's `unit` field is
+  whatever systemd unit controls that server (`minecraft@<name>.service`
+  for instanced Minecraft servers, a plain `<name>.service` for anything
+  else — see the Vintage Story entry in `config.yaml.example`). The
+  sudoers rule needs a matching `start`/`stop` line for each unit or
+  unit pattern you add.
 
 ## Dashboard setup
 

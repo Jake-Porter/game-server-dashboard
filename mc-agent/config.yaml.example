@@ -1,3 +1,7 @@
 servers:
   - name: craftoria
     display_name: Craftoria
+    unit: minecraft@craftoria.service
+  - name: vintagestory
+    display_name: Vintage Story
+    unit: vintagestory.service

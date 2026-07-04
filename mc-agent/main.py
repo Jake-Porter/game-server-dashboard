@@ -33,7 +33,7 @@ def check_auth(authorization: str = Header(None)):
 def require_server(name: str) -> str:
     if name not in SERVERS:
         raise HTTPException(status_code=404, detail="unknown server")
-    return f"minecraft@{name}.service"
+    return SERVERS[name]["unit"]
 
 
 def is_active(unit: str) -> str:
@@ -49,7 +49,7 @@ def list_servers():
         {
             "name": name,
             "display_name": cfg.get("display_name", name),
-            "status": is_active(f"minecraft@{name}.service"),
+            "status": is_active(cfg["unit"]),
         }
         for name, cfg in SERVERS.items()
     ]

@@ -1,1 +1,1 @@
-mcagent ALL=(root) NOPASSWD: /usr/bin/systemctl start minecraft@*.service, /usr/bin/systemctl stop minecraft@*.service
+mcagent ALL=(root) NOPASSWD: /usr/bin/systemctl start minecraft@*.service, /usr/bin/systemctl stop minecraft@*.service, /usr/bin/systemctl start vintagestory.service, /usr/bin/systemctl stop vintagestory.service

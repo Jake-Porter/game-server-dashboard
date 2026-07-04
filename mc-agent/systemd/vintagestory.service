@@ -1,0 +1,20 @@
+[Unit]
+Description=Vintage Story Server
+After=network.target
+
+[Service]
+Type=simple
+User=vintagestory
+Group=vintagestory
+WorkingDirectory=/opt/vintagestory
+ExecStart=/opt/vintagestory/run.sh
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+KillSignal=SIGTERM
+
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
