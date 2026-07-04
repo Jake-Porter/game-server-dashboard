@@ -2,96 +2,229 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jake's Game Servers</title>
 <style>
+  :root {
+    --bg: #10131a;
+    --bg-grad: #161b25;
+    --card: #1b212c;
+    --card-border: #262e3d;
+    --text: #e8eaf0;
+    --text-dim: #8b93a5;
+    --green: #3ddc84;
+    --green-dim: #1d3a2b;
+    --red: #ff6b6b;
+    --red-dim: #3a1f22;
+    --gray-dim: #2a3140;
+    --blue: #5b9dff;
+  }
+  * { box-sizing: border-box; }
   body {
-    font-family: system-ui, sans-serif;
-    background: #14171c;
-    color: #e6e6e6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: radial-gradient(1200px 600px at 10% -10%, var(--bg-grad), var(--bg));
+    color: var(--text);
     margin: 0;
-    padding: 2rem;
+    min-height: 100vh;
   }
-  h1 { font-weight: 600; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3rem;
   }
-  .card {
-    background: #1e222a;
-    border-radius: 10px;
-    padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
-  .card h2 { margin: 0 0 0.5rem 0; font-size: 1.1rem; }
-  .status {
-    display: inline-block;
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
+  h1 {
+    font-weight: 650;
+    font-size: 1.9rem;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    margin: 0.35rem 0 0;
+    font-size: 0.95rem;
+  }
+  #last-updated {
+    color: var(--text-dim);
     font-size: 0.8rem;
-    margin-bottom: 0.75rem;
   }
-  .status.active { background: #1f5c3a; color: #7ee6a8; }
-  .status.inactive { background: #3a3a3a; color: #bbb; }
-  .status.failed, .status.unknown { background: #5c1f1f; color: #e67e7e; }
-  button {
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    margin-right: 0.5rem;
-    cursor: pointer;
+  .banner {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid rgba(255,107,107,0.25);
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
     font-size: 0.9rem;
   }
-  .start-btn { background: #2f7a44; color: white; }
-  .stop-btn { background: #7a2f2f; color: white; }
-  .logs-btn { background: #2f4d7a; color: white; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  #error { color: #e67e7e; margin-bottom: 1rem; }
+  .banner[hidden] { display: none; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1rem;
+  }
+  .empty {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    padding: 2rem 0;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.3rem;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: #34405a;
+  }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--gray-dim);
+  }
+  .dot.active {
+    background: var(--green);
+    box-shadow: 0 0 0 3px rgba(61,220,132,0.18);
+    animation: pulse 2s infinite;
+  }
+  .dot.failed { background: var(--red); }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(61,220,132,0.35); }
+    70%  { box-shadow: 0 0 0 6px rgba(61,220,132,0); }
+    100% { box-shadow: 0 0 0 0 rgba(61,220,132,0); }
+  }
+  .status-label {
+    display: inline-block;
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .status-label.active { background: var(--green-dim); color: var(--green); }
+  .status-label.inactive { background: var(--gray-dim); color: var(--text-dim); }
+  .status-label.failed { background: var(--red-dim); color: var(--red); }
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    border-radius: 7px;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 550;
+    color: var(--text);
+    background: var(--gray-dim);
+    transition: filter 0.1s ease, opacity 0.1s ease;
+  }
+  button:hover:not(:disabled) { filter: brightness(1.15); }
+  button svg { width: 14px; height: 14px; }
+  .start-btn { background: #1d5c3a; color: #a4f2c6; }
+  .stop-btn { background: #5c1f1f; color: #ffb3b3; }
+  .logs-btn { background: #223357; color: #b7d0ff; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-top: 2.5rem;
+  }
   .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(6,8,12,0.7);
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(2px);
   }
   .modal-overlay.open { display: flex; }
   .modal {
-    background: #1e222a;
-    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
     padding: 1.25rem;
-    width: min(800px, 90vw);
-    max-height: 80vh;
+    width: min(820px, 92vw);
+    max-height: 82vh;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
   .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
   }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .modal-header .actions { gap: 0.4rem; }
   .modal pre {
-    background: #0f1115;
-    border-radius: 6px;
-    padding: 0.75rem;
+    background: #0b0d12;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.85rem;
     overflow: auto;
-    font-size: 0.8rem;
-    line-height: 1.4;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #c7ccd6;
     margin: 0;
   }
 </style>
 </head>
 <body>
-<h1>Jake's Game Servers</h1>
-<div id="error"></div>
-<div id="grid" class="grid"></div>
+<div class="page">
+  <div class="topbar">
+    <div>
+      <h1>Jake's Game Servers</h1>
+      <p class="subtitle">Start, stop, and watch logs — no SSH required</p>
+    </div>
+    <span id="last-updated"></span>
+  </div>
+  <div id="error" class="banner" hidden></div>
+  <div id="grid" class="grid"></div>
+  <footer>Auto-refreshes every 5 seconds</footer>
+</div>
 
 <div id="logs-modal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
-      <h2 id="logs-title" style="margin:0;"></h2>
-      <div>
+      <h2 id="logs-title"></h2>
+      <div class="actions">
         <button id="logs-refresh">Refresh</button>
         <button id="logs-close">Close</button>
       </div>
@@ -101,6 +234,12 @@
 </div>
 
 <script>
+const ICONS = {
+  start: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>',
+  logs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+};
+
 async function apiFetch(path, options = {}) {
   const res = await fetch(path, options);
   if (!res.ok) throw new Error(`${path} -> ${res.status}`);
@@ -116,16 +255,24 @@ function statusClass(status) {
 function render(servers) {
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
+  if (servers.length === 0) {
+    grid.innerHTML = `<div class="empty">No servers configured yet.</div>`;
+    return;
+  }
   for (const s of servers) {
+    const cls = statusClass(s.status);
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <h2>${s.display_name}</h2>
-      <div class="status ${statusClass(s.status)}">${s.status}</div>
-      <div>
-        <button class="start-btn" data-name="${s.name}" data-action="start" ${s.status === "active" ? "disabled" : ""}>Start</button>
-        <button class="stop-btn" data-name="${s.name}" data-action="stop" ${s.status !== "active" ? "disabled" : ""}>Stop</button>
-        <button class="logs-btn" data-name="${s.name}" data-display-name="${s.display_name}" data-action="logs">Logs</button>
+      <div class="card-top">
+        <h2>${s.display_name}</h2>
+        <span class="dot ${cls}"></span>
+      </div>
+      <div class="status-label ${cls}">${s.status}</div>
+      <div class="actions">
+        <button class="start-btn" data-name="${s.name}" data-action="start" ${s.status === "active" ? "disabled" : ""}>${ICONS.start} Start</button>
+        <button class="stop-btn" data-name="${s.name}" data-action="stop" ${s.status !== "active" ? "disabled" : ""}>${ICONS.stop} Stop</button>
+        <button class="logs-btn" data-name="${s.name}" data-display-name="${s.display_name}" data-action="logs">${ICONS.logs} Logs</button>
       </div>
     `;
     grid.appendChild(card);
@@ -136,7 +283,7 @@ function render(servers) {
       try {
         await apiFetch(`/api/servers/${btn.dataset.name}/${btn.dataset.action}`, { method: "POST" });
       } catch (e) {
-        document.getElementById("error").textContent = e.message;
+        showError(e.message);
       }
       await refresh();
     });
@@ -144,6 +291,12 @@ function render(servers) {
   grid.querySelectorAll(".logs-btn").forEach((btn) => {
     btn.addEventListener("click", () => openLogs(btn.dataset.name, btn.dataset.displayName));
   });
+}
+
+function showError(message) {
+  const el = document.getElementById("error");
+  el.textContent = message;
+  el.hidden = !message;
 }
 
 const logsModal = document.getElementById("logs-modal");
@@ -169,27 +322,27 @@ function openLogs(name, displayName) {
   loadLogs(name);
 }
 
+function closeLogs() {
+  logsModal.classList.remove("open");
+  currentLogsServer = null;
+}
+
 document.getElementById("logs-refresh").addEventListener("click", () => {
   if (currentLogsServer) loadLogs(currentLogsServer);
 });
-document.getElementById("logs-close").addEventListener("click", () => {
-  logsModal.classList.remove("open");
-  currentLogsServer = null;
-});
-logsModal.addEventListener("click", (e) => {
-  if (e.target === logsModal) {
-    logsModal.classList.remove("open");
-    currentLogsServer = null;
-  }
-});
+document.getElementById("logs-close").addEventListener("click", closeLogs);
+logsModal.addEventListener("click", (e) => { if (e.target === logsModal) closeLogs(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLogs(); });
 
 async function refresh() {
   try {
     const servers = await apiFetch("/api/servers");
-    document.getElementById("error").textContent = "";
+    showError(null);
     render(servers);
+    document.getElementById("last-updated").textContent =
+      "Updated " + new Date().toLocaleTimeString();
   } catch (e) {
-    document.getElementById("error").textContent = "Failed to reach mc-agent: " + e.message;
+    showError("Failed to reach mc-agent: " + e.message);
   }
 }
 
