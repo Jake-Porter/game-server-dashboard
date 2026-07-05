@@ -5,3 +5,6 @@ servers:
   - name: vintagestory
     display_name: Vintage Story
     unit: vintagestory.service
+  - name: fabric-vanilla
+    display_name: Fabric Vanilla
+    unit: minecraft@fabric-vanilla.service

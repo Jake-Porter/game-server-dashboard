@@ -332,7 +332,7 @@ function statusClass(status) {
 function gameIcon(name) {
   const n = name.toLowerCase();
   if (n.includes("vintage")) return "\u{1FAA8}"; // rock
-  if (n.includes("craft") || n.includes("minecraft")) return "⛏️"; // pick
+  if (n.includes("craft") || n.includes("minecraft") || n.includes("fabric") || n.includes("forge")) return "⛏️"; // pick
   return "\u{1F3AE}"; // controller
 }
 

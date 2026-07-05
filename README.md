@@ -69,6 +69,15 @@ Notes:
   directory), rebuild its venv from scratch afterward — venv scripts
   (`pip`, `uvicorn`, etc.) hardcode the old absolute path in their
   shebang lines and will break silently otherwise.
+- Different Minecraft versions can require different Java versions.
+  Installing a new JDK via `apt` can silently change the *system-wide*
+  default `java` (via `update-alternatives`), which will break any
+  other server relying on the bare `java` command in its `run.sh`.
+  After installing a new JDK: pin the default back with
+  `update-alternatives --set java /usr/lib/jvm/<version>/bin/java`,
+  and have each server's `run.sh` invoke its required JVM by full path
+  (e.g. `/usr/lib/jvm/java-25-openjdk-amd64/bin/java`) rather than the
+  bare `java` command, so future JDK installs can't affect it.
 
 ## Dashboard setup
 
