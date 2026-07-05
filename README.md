@@ -1,3 +1,5 @@
+<img width="1214" height="417" alt="Screenshot 2026-07-05 123410" src="https://github.com/user-attachments/assets/212bd761-77ce-4df8-8f7f-e6bbe1276df0" />
+
 # game-server-dashboard
 
 A small self-hosted dashboard for starting, stopping, and viewing logs for
